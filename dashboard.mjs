@@ -1,3 +1,6 @@
+import os from 'node:os';
+import path from 'node:path';
+import {workspace,applications} from './workspace.mjs';
 import {createInterface} from 'node:readline/promises';
 import {spawnSync} from 'node:child_process';
 const upstream='Affect-Dynamics/ic3o-developer-preview';
@@ -21,7 +24,7 @@ export function screen(state,identity){
         'Runtime    '+(state.active?.slice(0,12)??'not installed'),
         'Registry   '+(state.active?'bundled with active runtime':'not installed'),
         '',
-        '  1  Applications       Inspect or test a native network',
+        '  1  Applications       Manage registered applications',
         '  2  Registry           Browse installed Modes',
         '  3  Contributions      Open GitHub pull requests',
         '  4  Community          Open GitHub issues',
@@ -37,6 +40,7 @@ export async function dashboard(manager,call,{input=process.stdin,output=process
     let identity=account(query);
     const print=s=>output.write(s+'\n');
     if(!input.isTTY||!output.isTTY){print(screen(manager.status(),identity));return;}
+    const ws=workspace(path.join(os.homedir(),'.ic3o','preview','workspace'));
     const rl=createInterface({input,output});
     const ask=async prompt=>(await rl.question(prompt)).trim();
     try{
@@ -46,10 +50,7 @@ export async function dashboard(manager,call,{input=process.stdin,output=process
             if(choice==='q'||choice==='')break;
             try{
                 if(choice==='1'){
-                    const action=await ask('inspect or test > ');
-                    if(!['inspect','test'].includes(action))continue;
-                    const file=await ask('PEP path > ');
-                    if(file)manager.run([action,file]);
+                    await applications(ws,manager,call,ask,print);
                 }else if(choice==='2')manager.run(['modes']);
                 else if(choice==='3')call('gh',['pr','list','--repo',upstream,'--web']);
                 else if(choice==='4')call('gh',['issue','list','--repo',upstream,'--web']);
