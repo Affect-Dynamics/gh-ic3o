@@ -82,7 +82,8 @@ export function manager(root,{source=upstream,verify=dir=>command(process.execPa
         // Preserve caller cwd for app paths; resolve framework and registry together.
         command(process.execPath,[path.join(target,'cli.mjs'),...args],process.cwd());
     }
-    return {status,check,sync,rollback,run};
+    function snapshot(){const s=status();if(!s.active)throw Error('Run sync first');return {sha:s.active,root:assertSnapshot(s.active)};}
+    return {status,check,sync,rollback,run,snapshot};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
     try{
