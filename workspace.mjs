@@ -1,3 +1,4 @@
+import {examples} from './registry.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
@@ -22,7 +23,7 @@ export function workspace(root){
 export async function applications(ws,manager,call,ask,print){
     for(;;){
         const apps=ws.list();
-        print('\nic3o / APPLICATIONS\n'+apps.map((a,i)=>'  '+(i+1)+'  '+a.name+(fs.existsSync(a.pep)?'':' [missing]')).join('\n')+'\n  n  New application\n  a  Register local PEP\n  i  Import GitHub repository\n  b  Back');
+        print('\nic3o / APPLICATIONS\n'+apps.map((a,i)=>'  '+(i+1)+'  '+a.name+(fs.existsSync(a.pep)?'':' [missing]')).join('\n')+'\n  n  New application\n  a  Register local PEP\n  i  Import GitHub repository\n  e  Browse bundled examples\n  b  Back');
         const choice=await ask('applications > ');
         if(choice==='b'||choice==='')return;
         try{
@@ -31,6 +32,11 @@ export async function applications(ws,manager,call,ask,print){
                 const name=await ask('Application name (created in current directory) > ');
                 if(!/^[a-z][a-z0-9-]{0,62}$/.test(name))throw Error('Invalid application name');
                 manager.run(['init',name]);ws.add(path.join(process.cwd(),name,'pep',name+'.pep'));
+            }else if(choice==='e'){
+                const items=examples(manager.snapshot().root);
+                print(items.map((e,i)=>(i+1)+'  '+e.name).join('\n')||'No bundled examples');
+                const selected=await ask('Register example number (blank = cancel) > ');
+                if(/^\d+$/.test(selected)&&items[Number(selected)-1])ws.add(items[Number(selected)-1].pep);
             }else if(choice==='i'){
                 const repo=await ask('GitHub owner/repository > ');
                 if(!/^[a-zA-Z0-9][a-zA-Z0-9-]*\/[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(repo))throw Error('Invalid GitHub repository');
