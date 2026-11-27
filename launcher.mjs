@@ -1,10 +1,12 @@
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
+import {dashboard} from './dashboard.mjs';
 import {manager} from './sync.mjs';
 const [major,minor]=process.versions.node.split('.').map(Number);
 const help=`gh ic3o — contributor preview
 
+  dashboard            Interactive contributor environment
   sync                 Verify and activate framework + registry
   check                Check upstream revision
   status               Show active revision
@@ -23,7 +25,7 @@ the active upstream revision. No background updater or telemetry.
 `;
 try{
     if(major<22||(major===22&&minor<13))throw Error('Node 22.13+ required');
-    const [action='help',...args]=process.argv.slice(2);
+    const [action='dashboard',...args]=process.argv.slice(2);
     const call=(exe,argv)=>{
         const r=spawnSync(exe,argv,{stdio:'inherit',shell:false});
         if(r.error)throw r.error;
@@ -34,7 +36,8 @@ try{
     else if(action==='whoami'&&!args.length)call('gh',['api','--hostname','github.com','user','--jq','.login']);
     else{
         const m=manager(path.join(os.homedir(),'.ic3o','preview'));
-        if(['sync','check','status','rollback'].includes(action)&&!args.length)console.log(JSON.stringify(m[action](),null,2));
+        if(action==='dashboard'&&!args.length)await dashboard(m,call);
+        else if(['sync','check','status','rollback'].includes(action)&&!args.length)console.log(JSON.stringify(m[action](),null,2));
         else if(['init','registry','run','test','inspect','validate','resolve','modes','frontends','repo','contribute','report'].includes(action)){
             if(!m.status().active)throw Error('Run gh ic3o sync first');
             m.run([action,...args]);
