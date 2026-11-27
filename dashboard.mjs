@@ -1,3 +1,4 @@
+import {registry} from './registry.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import {workspace,applications} from './workspace.mjs';
@@ -25,7 +26,7 @@ export function screen(state,identity){
         'Registry   '+(state.active?'bundled with active runtime':'not installed'),
         '',
         '  1  Applications       Manage registered applications',
-        '  2  Registry           Browse installed Modes',
+        '  2  Registry           Search native definitions',
         '  3  Contributions      Open GitHub pull requests',
         '  4  Community          Open GitHub issues',
         '  5  Environment        Verify and synchronize',
@@ -51,7 +52,7 @@ export async function dashboard(manager,call,{input=process.stdin,output=process
             try{
                 if(choice==='1'){
                     await applications(ws,manager,call,ask,print);
-                }else if(choice==='2')manager.run(['modes']);
+                }else if(choice==='2')await registry(manager,ask,print,query);
                 else if(choice==='3')call('gh',['pr','list','--repo',upstream,'--web']);
                 else if(choice==='4')call('gh',['issue','list','--repo',upstream,'--web']);
                 else if(choice==='5'){
